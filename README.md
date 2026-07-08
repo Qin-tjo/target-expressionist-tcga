@@ -16,7 +16,7 @@ No backend. Real TCGA data. A pixel-art CRT you can actually type into.
 
 ## What it does
 
-- 🖥️ **Type a gene on a retro CRT** — a pixel keyboard you can click or type on, with cBioPortal-style autocomplete (powered by [MyGene.info](https://mygene.info)).
+- 🖥️ **Type a gene on a retro CRT** — a pixel keyboard you can click or type on, with gene-symbol autocomplete that also understands nicknames like HER2 and PD-L1 (powered by [MyGene.info](https://mygene.info)).
 - 📊 **Instant ranked box plot** across the **33 TCGA cancer types**, sorted by median expression, in `log2(TPM+1)`.
 - 🎨 **Interactive canvas** — editable/resizable title & axes, colorblind-checked palettes, rotatable x-axis, hover tooltips, a beeswarm/points overlay, and an outlier toggle.
 - 💥 **Playful animations** — bars animate in with a stagger, deleting a bar **shatters it into pieces** while the rest re-rank, resetting **crumples the figure into a trash can**, and generating a plot **zooms you “into the computer.”**

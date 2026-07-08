@@ -84,15 +84,20 @@ export function CanvasPage() {
   // the full data, fetched live on first use.
   const hasPerSample = !!figure?.cancers.some((c) => c.values.length > 0);
   const [enriching, setEnriching] = useState(false);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
 
   async function ensureFullData(): Promise<boolean> {
     if (!figure || hasPerSample) return true;
     setEnriching(true);
+    setEnrichError(null);
     try {
       const full = await fetchFullFigure({ symbol, name, ensembl });
       setFigure({ ...full, gene: { ...full.gene, ensembl: ensembl || full.gene.ensembl } });
       return true;
     } catch {
+      setEnrichError(
+        "Individual points & outliers need the live UCSC Xena feed, which isn't reachable from the published site (Xena only allows localhost / xenabrowser.net). Available for featured genes, or run the app locally.",
+      );
       return false;
     } finally {
       setEnriching(false);
@@ -264,6 +269,11 @@ export function CanvasPage() {
                     onDeleteBar={deleteBar}
                   />
                 </div>
+                {enrichError && (
+                  <div className="mt-2 border-2 border-ink bg-pink-soft/60 p-2 font-term text-ink" style={{ fontSize: 15, lineHeight: 1.35 }}>
+                    ⚠ {enrichError}
+                  </div>
+                )}
                 <Footnote figure={figure} deleted={deleted} />
               </>
             )}
