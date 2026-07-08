@@ -36,6 +36,8 @@ The plot is built from a **scientifically defensible pipeline**, applied identic
 
 Box stats are **precomputed for ~19,000 protein-coding genes** and bundled (sharded by first letter) for instant, offline plots; the ~20 most-common targets ship with full per-sample data for the beeswarm overlay; anything else resolves live from Xena on demand.
 
+> **POINTS / OUTLIERS on the deployed site:** Xena's hub only sends CORS headers to `localhost` / `xenabrowser.net`, so the on-demand per-sample fetch is blocked from a GitHub Pages origin. To enable the overlays for *any* gene on the live site, deploy the tiny bundled CORS proxy — see [`cloudflare-worker/`](cloudflare-worker/). (Bundled/curated genes work regardless; local dev is unaffected.)
+
 > ⚠️ **For research/education only — not for clinical use.** Cross-cohort single-gene TPM comparison is exploratory, not a formal differential-expression test.
 
 ## Tech

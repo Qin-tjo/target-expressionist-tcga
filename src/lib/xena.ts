@@ -2,11 +2,23 @@ import type { SampleRecord, FigureData } from "../data/types";
 import { runQc } from "./qc";
 import { buildFigure, toLog2Tpm1 } from "./boxStats";
 import { getAliases, getEnsembl } from "./mygene";
+import { XENA_PROXY_URL } from "../config";
 
 const stripVersion = (ensg: string) => ensg.split(".")[0];
 
 export const XENA_HUB = "https://toil.xenahubs.net";
 export const TPM_DATASET = "tcga_RSEM_gene_tpm";
+
+/**
+ * Where to POST Xena queries. Xena's hub only sends CORS headers to localhost /
+ * xenabrowser.net, so on any other origin (e.g. GitHub Pages) we route through the
+ * Cloudflare Worker proxy when one is configured; otherwise we hit Xena directly.
+ */
+function xenaEndpoint(): string {
+  const host = typeof location !== "undefined" ? location.hostname : "";
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  return !isLocal && XENA_PROXY_URL ? XENA_PROXY_URL : `${XENA_HUB}/data/`;
+}
 
 // Xena query lambda (verbatim from ucscXena/xenaPython queries/datasetGeneProbesValues.xq).
 // Resolves gene symbols → probes via the dataset's probemap, then fetches values.
@@ -24,7 +36,7 @@ function marshalStrings(xs: string[]): string {
 }
 
 async function xenaPost(query: string, signal?: AbortSignal): Promise<unknown> {
-  const res = await fetch(`${XENA_HUB}/data/`, {
+  const res = await fetch(xenaEndpoint(), {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
     body: query,
