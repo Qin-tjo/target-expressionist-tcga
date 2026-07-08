@@ -8,7 +8,7 @@ No backend. Real TCGA data. A pixel-art CRT you can actually type into.
 
 <!-- Add a hero GIF here once recorded: ![demo](docs/demo.gif) -->
 
-**🔗 Live demo → https://qin-tjo.github.io/Target-dashboard/**
+**🔗 Live demo → https://qin-tjo.github.io/target-expressionist-tcga/**
 
 <sub>(First deploy: in the repo, **Settings → Pages → Build and deployment → Source: “GitHub Actions.”** The included workflow builds and publishes on every push to `main`.)</sub>
 
