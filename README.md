@@ -34,9 +34,9 @@ The plot is built from a **scientifically defensible pipeline**, applied identic
 - **Drops** exact duplicates and missing values; flags small-n cohorts.
 - **Gene-symbol drift handled:** the dataset uses GENCODE v23 symbols, so renamed targets (e.g. `NECTIN4` → `PVRL4`) are resolved via previous/alias symbols, **validated against the gene’s Ensembl id** to avoid alias collisions.
 
-Box stats are **precomputed for ~19,000 protein-coding genes** and bundled (sharded by first letter) for instant, offline plots; the ~20 most-common targets ship with full per-sample data for the beeswarm overlay; anything else resolves live from Xena on demand.
+Box stats are **precomputed for ~19,000 protein-coding genes** and bundled (sharded by first letter) for instant, offline plots. On top of that, **~270 featured genes** (drug targets, oncogenes/tumor-suppressors, immuno-oncology, DDR, kinases, heme/CAR-T) ship with **per-sample data** so the beeswarm (POINTS) and OUTLIERS overlays work for them everywhere — including the deployed site.
 
-> **POINTS / OUTLIERS on the deployed site:** Xena's hub only sends CORS headers to `localhost` / `xenabrowser.net`, so the on-demand per-sample fetch is blocked from a GitHub Pages origin. To enable the overlays for *any* gene on the live site, deploy the tiny bundled CORS proxy — see [`cloudflare-worker/`](cloudflare-worker/). (Bundled/curated genes work regardless; local dev is unaffected.)
+> **POINTS / OUTLIERS for *non-featured* genes:** these need a live per-sample fetch from UCSC Xena, whose hub only sends CORS headers to `localhost` / `xenabrowser.net` — so it's blocked from a GitHub Pages origin. Locally it works for every gene; on the deployed site the featured set works, and the rest show a short note. To enable the overlays for *any* gene on the live site, deploy the tiny bundled CORS proxy — see [`cloudflare-worker/`](cloudflare-worker/).
 
 > ⚠️ **For research/education only — not for clinical use.** Cross-cohort single-gene TPM comparison is exploratory, not a formal differential-expression test.
 

@@ -27,10 +27,45 @@ const HGNC_URL = "https://storage.googleapis.com/public-download-files/hgnc/tsv/
 const BATCH = 120;
 const RETRIEVED = new Date().toISOString().slice(0, 10);
 
-const POPULAR_GENES = [
-  "TP53", "EGFR", "MYC", "ERBB2", "KRAS", "BRAF", "PTEN", "PIK3CA",
-  "CD274", "PDCD1", "CTLA4", "ESR1", "AR", "VEGFA", "MKI67", "AURKA",
-  "CDKN2A", "BRCA1", "MET", "ALK",
+// Featured genes that ship with full (downsampled) per-sample data, so POINTS /
+// OUTLIERS work for them on the deployed site (where the live Xena feed is
+// CORS-blocked). Covers drug targets, IO, common oncogenes/TSGs, DDR, kinases,
+// hormone/lineage, proliferation, and heme/CAR-T targets. Deduped at runtime.
+const CURATED_GENES = [
+  // ADC / surface targets
+  "ERBB2", "ERBB3", "ERBB4", "EGFR", "TACSTD2", "NECTIN4", "TNFRSF8", "CD22", "CD33", "CD79B",
+  "TNFRSF17", "FOLR1", "F3", "CEACAM5", "CD19", "CD74", "MSLN", "DLL3", "DLL4", "ROR1", "ROR2",
+  "SLC39A6", "GPNMB", "TPBG", "CLDN18", "CLDN6", "MUC1", "MUC16", "STEAP1", "STEAP2", "FOLH1",
+  "MET", "CD70", "IL2RA", "CD37", "IL3RA", "LY75", "ENPP3", "SLITRK6", "GPC3", "GPC2", "PTK7",
+  "SLC34A2", "ITGB6", "CD276", "VTCN1", "CDH6", "CDH3", "CDH17", "GPR20", "GUCY2C", "ALCAM",
+  "EPHA2", "EPHB4", "AXL", "LRRC15", "SLC44A4", "EPCAM", "PROM1", "MCAM", "NOTCH1", "NOTCH3", "FAP",
+  // Immuno-oncology
+  "CD274", "PDCD1", "PDCD1LG2", "CTLA4", "LAG3", "HAVCR2", "TIGIT", "VSIR", "IDO1", "CD47", "SIRPA",
+  "CD40", "TNFRSF9", "ICOS", "CD27", "TNFRSF4", "CCR8", "CCR4", "TNFRSF18", "BTLA", "CD96", "ENTPD1",
+  "NT5E", "FOXP3", "CD8A", "CD4", "GZMB", "PRF1", "IFNG", "TNF", "CXCL9", "CXCL10", "CXCL13",
+  "CD68", "CD163", "PTPRC", "ITGAX",
+  // Oncogenes / tumor suppressors
+  "TP53", "KRAS", "NRAS", "HRAS", "BRAF", "RAF1", "PIK3CA", "PIK3CB", "PIK3CD", "PIK3R1", "PTEN",
+  "MYC", "MYCN", "MYCL", "RB1", "CDKN2A", "CDKN1A", "CDKN1B", "APC", "VHL", "ALK", "ROS1", "RET",
+  "KIT", "PDGFRA", "PDGFRB", "FGFR1", "FGFR2", "FGFR3", "FGFR4", "MDM2", "MDM4", "CCND1", "CCNE1",
+  "CDK4", "CDK6", "CDK12", "AKT1", "AKT2", "AKT3", "MTOR", "STK11", "KEAP1", "NFE2L2", "NF1", "NF2",
+  "SMAD4", "TGFBR2", "CTNNB1", "GNAS", "GNAQ", "GNA11", "IDH1", "IDH2", "TERT", "ARID1A", "SMARCA4",
+  "SMARCB1", "BAP1", "PBRM1", "SETD2", "KMT2D", "KMT2C", "CREBBP", "EP300", "ATRX", "MEN1", "TSC1",
+  "TSC2", "FBXW7", "NOTCH2", "BCL2", "BCL6", "MYD88", "CARD11", "CD79A",
+  // Heme / myeloid
+  "JAK2", "MPL", "CALR", "FLT3", "NPM1", "DNMT3A", "TET2", "ASXL1", "RUNX1", "CEBPA", "WT1", "GATA2",
+  "SF3B1", "SRSF2", "U2AF1", "EZH2", "MS4A1", "CD38", "SLAMF7", "GPRC5D", "FCRL5", "BTK", "SYK",
+  // DNA damage / repair
+  "BRCA1", "BRCA2", "ATM", "ATR", "CHEK1", "CHEK2", "PARP1", "PARP2", "RAD51", "RAD51C", "PALB2",
+  "MLH1", "MSH2", "MSH6", "PMS2", "POLE", "POLD1", "ERCC1", "FANCA", "BRIP1", "BARD1",
+  // Hormone / lineage
+  "AR", "ESR1", "ESR2", "PGR", "GATA3", "FOXA1", "NKX3-1", "HOXB13",
+  // Proliferation / therapy-relevant
+  "MKI67", "AURKA", "AURKB", "PLK1", "TOP2A", "TOP1", "CCNB1", "BIRC5", "TYMS", "RRM1", "RRM2",
+  "TUBB3", "ABCB1", "ABCG2", "VEGFA", "VEGFB", "VEGFC", "KDR", "FLT1", "FLT4", "HIF1A", "EPAS1", "CA9",
+  // Kinases / other drug targets
+  "ABL1", "BCR", "JAK1", "JAK3", "STAT3", "SRC", "MAP2K1", "MAP2K2", "MAPK1", "MAPK3", "NTRK1",
+  "NTRK2", "NTRK3", "IGF1R", "MERTK", "DDR1", "DDR2", "CSF1R",
 ];
 
 const Q = {
@@ -128,6 +163,81 @@ function shardOf(symbol: string): string {
   return /[A-Z]/.test(ch) ? ch : "_";
 }
 
+/** Evenly subsample a sorted array down to at most `max` items (keeps shape). */
+function downsample(arr: number[], max: number): number[] {
+  if (arr.length <= max) return arr.map(r3);
+  const step = arr.length / max;
+  const out: number[] = [];
+  for (let i = 0; i < max; i++) out.push(r3(arr[Math.floor(i * step)]));
+  return out;
+}
+
+/**
+ * Shrink a full figure for a compact curated cache: keep accurate box stats +
+ * true n, but downsample the per-sample values (beeswarm) and cap outliers so the
+ * bundled file stays small. Rounds everything to 3 decimals.
+ */
+function compactFigure(fig: FigureData): FigureData {
+  for (const c of fig.cancers) {
+    c.values = downsample(c.values, 60);
+    c.outliers = downsample(c.outliers, 40);
+    c.min = r3(c.min);
+    c.q1 = r3(c.q1);
+    c.median = r3(c.median);
+    c.q3 = r3(c.q3);
+    c.max = r3(c.max);
+    c.whiskerLow = r3(c.whiskerLow);
+    c.whiskerHigh = r3(c.whiskerHigh);
+  }
+  return fig;
+}
+
+/** Fetch a gene's raw per-sample values by an exact query name, or null if not in the probemap. */
+async function fetchGeneRaw(
+  name: string,
+  tcgaSamples: string[],
+): Promise<{ ensembl: string; raw: number[] } | null> {
+  const resp = await xena<[{ name: string[] }, (number | string | null)[][]]>(
+    `(${Q.geneValues} ${JSON.stringify(TPM)} ${strArr(tcgaSamples)} ${strArr([name])})`,
+  );
+  const names = resp[0]?.name ?? [];
+  if (!names.length) return null;
+  const raw = (resp[1][0] ?? []).map((v) => (typeof v === "number" ? v : NaN));
+  return { ensembl: names[0], raw };
+}
+
+/** Build the compact per-sample caches for the curated set (resolves renamed symbols). */
+async function buildCuratedCaches(
+  tcgaSamples: string[],
+  sampleAbbr: Record<string, string>,
+  aliases: Map<string, string[]>,
+  cacheDir: string,
+): Promise<string[]> {
+  const genes = [...new Set(CURATED_GENES)];
+  const cached: string[] = [];
+  let done = 0;
+  for (const g of genes) {
+    // Try the current symbol; if it isn't in the GENCODE-v23 probemap, try its
+    // previous/alias symbols (e.g. NECTIN4 → PVRL4).
+    let hit = await fetchGeneRaw(g, tcgaSamples);
+    if (!hit) {
+      for (const cand of aliases.get(g) ?? []) {
+        hit = await fetchGeneRaw(cand, tcgaSamples);
+        if (hit) break;
+      }
+    }
+    done++;
+    if (!hit) continue;
+    const qc = runQc(recordsFor(hit.raw, tcgaSamples, sampleAbbr));
+    const fig = buildFigure(qc, { symbol: g, name: "", ensembl: hit.ensembl }, { dataset: TPM, hub: "https://toil.xenahubs.net", retrieved: RETRIEVED, source: "cache" });
+    writeFileSync(join(cacheDir, `${g}.json`), JSON.stringify(compactFigure(fig)));
+    cached.push(g);
+    if (done % 40 === 0 || done === genes.length) console.log(`  curated ${done}/${genes.length} (${cached.length} written)`);
+  }
+  writeFileSync(join(cacheDir, "index.json"), JSON.stringify(cached));
+  return cached;
+}
+
 async function main() {
   const here = dirname(fileURLToPath(import.meta.url));
   const dataDir = join(here, "..", "src", "data");
@@ -136,12 +246,13 @@ async function main() {
   mkdirSync(cacheDir, { recursive: true });
   mkdirSync(statsDir, { recursive: true });
   const aliasesOnly = process.argv.includes("--aliases-only");
+  const curatedOnly = process.argv.includes("--curated-only");
+  const reuseFromDisk = aliasesOnly || curatedOnly;
 
   let sampleAbbr: Record<string, string>;
-  if (aliasesOnly) {
-    // Fast path: reuse the saved sample map + existing curated caches.
+  if (reuseFromDisk) {
     sampleAbbr = JSON.parse(readFileSync(join(dataDir, "tcga_samples.json"), "utf8"));
-    console.log(`Reusing ${Object.keys(sampleAbbr).length} TCGA samples from disk (aliases-only)`);
+    console.log(`Reusing ${Object.keys(sampleAbbr).length} TCGA samples from disk`);
   } else {
     console.log("Fetching sample list…");
     const samples = await xena<string[]>(`(${Q.samples} ${JSON.stringify(TPM)} 100000)`);
@@ -151,31 +262,24 @@ async function main() {
     sampleAbbr = await buildSampleMap(samples);
     writeFileSync(join(dataDir, "tcga_samples.json"), JSON.stringify(sampleAbbr));
     console.log(`  ${Object.keys(sampleAbbr).length} TCGA samples, ${new Set(Object.values(sampleAbbr)).size} cancer types`);
-
-    // 1) Curated full caches (with per-sample values for beeswarm/outliers).
-    console.log("Precomputing curated caches…");
-    const cachedGenes: string[] = [];
-    for (const g of POPULAR_GENES) {
-      const resp = await xena<[{ name: string[] }, (number | string | null)[][]]>(
-        `(${Q.geneValues} ${JSON.stringify(TPM)} ${strArr(Object.keys(sampleAbbr))} ${strArr([g])})`,
-      );
-      const names = resp[0]?.name ?? [];
-      if (!names.length) continue;
-      const raw = (resp[1][0] ?? []).map((v) => (typeof v === "number" ? v : NaN));
-      const qc = runQc(recordsFor(raw, Object.keys(sampleAbbr), sampleAbbr));
-      const fig = buildFigure(qc, { symbol: g, name: "", ensembl: names[0] }, { dataset: TPM, hub: "https://toil.xenahubs.net", retrieved: RETRIEVED, source: "cache" });
-      writeFileSync(join(cacheDir, `${g}.json`), JSON.stringify(fig));
-      cachedGenes.push(g);
-    }
-    writeFileSync(join(cacheDir, "index.json"), JSON.stringify(cachedGenes));
-    console.log(`  cached ${cachedGenes.length} genes`);
   }
   const tcgaSamples = Object.keys(sampleAbbr);
 
-  // 2) All-gene compact box-stats, sharded by first letter.
+  // Gene list + alias map (used by curated symbol resolution and the stats passes).
   console.log("Fetching gene list (HGNC protein-coding)…");
   const { symbols: allGenes, aliases } = await fetchHgnc();
   console.log(`  ${allGenes.length} genes`);
+
+  // Curated per-sample caches (skip in the stats-only aliases pass).
+  if (!aliasesOnly) {
+    console.log(`Precomputing curated caches (${new Set(CURATED_GENES).size} featured genes)…`);
+    const cached = await buildCuratedCaches(tcgaSamples, sampleAbbr, aliases, cacheDir);
+    console.log(`  cached ${cached.length} curated genes`);
+  }
+  if (curatedOnly) {
+    console.log("Done (curated-only).");
+    return;
+  }
 
   type Shards = Record<string, Record<string, { c: Record<string, number[]> }>>;
   const shards: Shards = {};
