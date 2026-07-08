@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-top: #d8d8dc; /* grey upper field */
+  --bg-bottom: #ffe4f0; /* light-pink lower field */
+  --ink: #111111;
+  --paper: #ffffff;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  /* "CRT at night" — stays within the black / pink / grey theme */
+  --bg-top: #14141a;
+  --bg-bottom: #241019;
+  --ink: #f4f4f5;
+  --paper: #17171d;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Retro pixel cursor — black & white, used everywhere (decorative; falls back to system). */
+:root {
+  --cursor-arrow: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='28'%20height='28'%20shape-rendering='crispEdges'%3E%3Cpath%20d='M3%202%20L3%2020%20L8%2015%20L11%2022%20L14%2021%20L11%2014%20L18%2014%20Z'%20fill='%23111111'%20stroke='white'%20stroke-width='1.6'%20stroke-linejoin='miter'/%3E%3C/svg%3E") 3 2, auto;
+}
+
+body,
+button:not(:disabled),
+a,
+label,
+select,
+summary,
+input[type="range"],
+[role="button"] {
+  cursor: var(--cursor-arrow);
+}
+
+/* Text fields keep a normal text caret cursor. */
+input[type="text"],
+input:not([type]),
+textarea {
+  cursor: text;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-top) 52%, var(--bg-bottom) 52%, var(--bg-bottom) 100%);
+  -webkit-font-smoothing: antialiased;
+  font-family: theme("fontFamily.term");
+}
+
+/* Numbers should be tabular everywhere they matter. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Photosensitivity + reduced-motion: kill flicker/heavy motion when asked. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
